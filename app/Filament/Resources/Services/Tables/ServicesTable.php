@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Filament\Resources\Services\Tables;
+
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Table;
+
+class ServicesTable
+{
+    public static function configure(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('service_type')
+                    ->label("Service")
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('classification')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('category')
+                    ->formatStateUsing(fn ($state): string => $state == 1 ? 'Request' : 'Booking')
+                    ->sortable(),
+                ToggleColumn::make('is_active'),
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable(),
+            ])
+            ->filters([
+                TrashedFilter::make(),
+            ])
+            ->recordActions([
+                EditAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
+                ]),
+            ]);
+    }
+}
