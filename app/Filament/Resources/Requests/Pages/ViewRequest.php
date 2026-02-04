@@ -140,7 +140,7 @@ class ViewRequestPage extends Page
             
             // Submit to Daily Accomplishment API
             $response = Http::post(
-                'http://192.168.160.229:8000/Daily_Accomplishment/ticketing/api',
+                'https://ipcr.davaodeoro.gov.ph/Daily_Accomplishment/ticketing/api',
                 $payload
             );
             
