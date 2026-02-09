@@ -7,6 +7,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Resources\Pages\EditRecord;
+use App\Models\Checkrequest;
+use Illuminate\Database\Eloquent\Model;
 
 class EditRequest extends EditRecord
 {

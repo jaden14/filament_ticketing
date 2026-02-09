@@ -4,15 +4,18 @@ namespace App\Filament\Resources\Bookings\Schemas;
 
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\FileUpload;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Forms\Components\Toggle;
+use Illuminate\Support\HtmlString;
 use Filament\Support\Icons\Heroicon;
 use Filament\Schemas\Schema;
 use App\Models\Service;
@@ -45,6 +48,11 @@ class BookingForm
                             ->required()
                             ->disabled(fn (Get $get): bool => $get('released') === true),
                     ]),
+                FileUpload::make('files')
+                    ->columnSpanFull()
+                    ->acceptedFileTypes(['application/pdf'])
+                    ->maxSize(3024),
+
                 DatePicker::make('booked_at')
                     ->label("Book On")
                     ->required()
@@ -56,6 +64,60 @@ class BookingForm
                     ->reactive()
                     ->minDate(fn (Get $get) => $get('booked_at'))
                     ->disabled(fn (Get $get): bool => $get('released') === true),
+
+                Placeholder::make('ipcr_code_id')
+                        ->label('IPCR Output')
+                        ->content(new HtmlString('
+                            <div class="bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-700 rounded-lg px-3 py-2 inline-block">
+                                <span class="text-success-700 dark:text-success-400 font-semibold">✓ ADDED to IPCR</span>
+                            </div>
+                        '))
+                        ->visible(function ($record): bool {
+
+                                if ($record?->ipcr_code_id != null) {
+                                    return true;
+                                }
+                                
+                                return false;
+                        })
+                        ->columnSpanFull(),
+
+                    Select::make('ipcr_code_id')
+                            ->label('IPCR Output')
+                            ->placeholder('Select IPCR Output')
+                            ->searchable()
+                            ->preload()
+                            ->options(function () {
+                                try {                
+                                    $empCode = auth()->user()->cats;
+                                    
+                                    $response = \Illuminate\Support\Facades\Http::get(
+                                        "https://ipcr.davaodeoro.gov.ph/ipcr-code",
+                                        ['emp_code' => $empCode]
+                                    );
+                                    
+                                    if (!$response->successful()) {
+                                        return [];
+                                    }
+                                    
+                                    $datas = $response->json();
+                                    
+                                    return collect($datas)->pluck('individual_output', 'id')->toArray();
+                                    
+                                } catch (\Exception $e) {
+                                    \Illuminate\Support\Facades\Log::error('IPCR Code fetch failed: ' . $e->getMessage());
+                                    return [];
+                                }
+                            })
+                            ->helperText('Select the IPCR Output related to this work')
+                            ->columnSpanFull()
+                            ->visible(function ($record): bool {
+                                if ($record?->ipcr_code_id == null) {
+                                    return true;
+                                }
+                                return false;
+                            }),
+
                 Hidden::make('status')
                     ->default("Pending"),
                 Hidden::make('released_at')

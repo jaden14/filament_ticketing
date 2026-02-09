@@ -36,7 +36,7 @@ class RequestResource extends Resource
         return RequestsTable::configure($table);
     }
 
-    public static function getEloquentQuery(): Builder
+    /*public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
         $user = auth()->user();
@@ -68,7 +68,7 @@ class RequestResource extends Resource
                       $query->where('user_id', $user->id);
                   });
         });
-    }
+    }*/
 
     public static function getRelations(): array
     {
@@ -83,6 +83,7 @@ class RequestResource extends Resource
             'index' => ListRequests::route('/'), 
             'my-assignment' => ViewAssignment::route('/{record}/my-assignment'),
             'view-request' =>  ViewRequestPage::route('/{record}/view-request'),
+            'eidt' => EditRequest::route('/{record}/edit'),
         ];
     }
 

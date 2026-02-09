@@ -72,4 +72,9 @@ class RequestPolicy
         return $authUser->can('AssignRequest:Request');
     }
 
+    public function returnUnit(AuthUser $authUser, Request $request): bool
+    {
+        return $authUser->can('ReturnUnit:Request');
+    }
+
 }

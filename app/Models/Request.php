@@ -158,4 +158,67 @@ class Request extends Model
             return sprintf('%ds', $secs);
         }
     }
+
+    public function scopeOrderByStatusAndPriority(Builder $query): Builder
+    {
+        return $query->selectRaw('
+            formrequests.*,
+            CASE
+                -- Update Required: ONLY if no checkrequests exist AND missing required fields
+                WHEN NOT EXISTS (
+                    SELECT 1 FROM checkrequests 
+                    WHERE checkrequests.formrequest_id = formrequests.id
+                ) AND (service_id IS NULL OR prio IS NULL OR category_id IS NULL OR no_of_affected IS NULL) 
+                THEN 1
+                
+                -- Pending: No checkrequests exist yet (and has all required fields)
+                WHEN NOT EXISTS (
+                    SELECT 1 FROM checkrequests 
+                    WHERE checkrequests.formrequest_id = formrequests.id
+                ) 
+                THEN 2
+                
+                -- Pending: Checkrequests exist but all are Pending
+                WHEN EXISTS (
+                    SELECT 1 FROM checkrequests 
+                    WHERE checkrequests.formrequest_id = formrequests.id
+                ) AND NOT EXISTS (
+                    SELECT 1 FROM checkrequests 
+                    WHERE checkrequests.formrequest_id = formrequests.id 
+                    AND checkrequests.status IN ("On Process", "Completed")
+                ) 
+                THEN 2
+                
+                -- On Process: At least one checkrequest is On Process
+                WHEN EXISTS (
+                    SELECT 1 FROM checkrequests 
+                    WHERE checkrequests.formrequest_id = formrequests.id 
+                    AND checkrequests.status = "On Process"
+                ) 
+                THEN 3
+                
+                -- Closed: All checkrequests are Completed
+                WHEN EXISTS (
+                    SELECT 1 FROM checkrequests 
+                    WHERE checkrequests.formrequest_id = formrequests.id
+                ) AND NOT EXISTS (
+                    SELECT 1 FROM checkrequests 
+                    WHERE checkrequests.formrequest_id = formrequests.id 
+                    AND checkrequests.status != "Completed"
+                ) 
+                THEN 4
+                
+                ELSE 5
+            END as status_priority,
+            CASE
+                WHEN prio = "p1" THEN 1
+                WHEN prio = "p2" THEN 2
+                WHEN prio = "p3" THEN 3
+                ELSE 4
+            END as prio_order
+        ')
+        ->orderBy('status_priority', 'asc')
+        ->orderBy('prio_order', 'asc')
+        ->orderBy('created_at', 'desc');
+    }
 }

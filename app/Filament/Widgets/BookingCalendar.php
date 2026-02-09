@@ -58,8 +58,8 @@ class BookingCalendar extends CalendarWidget
                 $color = match($booking->status) {
                     'Pending' => '#f59e0b',
                     'Approved' => '#10b981',
-                    'Released' => '#3b82f6',
-                    'Returned' => '#ef4444',
+                    'Released' => '#008000',
+                    'Returned' => '#800080',
                     default => '#8b5cf6',
                 };
                 

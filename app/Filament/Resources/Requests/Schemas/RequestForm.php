@@ -14,6 +14,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use App\Models\Request;
 use App\Models\Service;
 use App\Models\Office;
 use App\Models\User;
@@ -64,33 +65,15 @@ class RequestForm
                         ->live() // Add live() to trigger updates
                         ->afterStateUpdated(fn ($state, $set) => $set('name', null)),
 
-                    Select::make('cats_no')
-                            ->label('Requesting Personnel')
-                            ->searchable()
-                            ->options(function (Get $get): array {
-                                $office_id = $get('office_id');
-                                
-                                if (!$office_id) {
-                                    return []; // Return empty array if no classification selected
-                                }
-                                
-                                return User::query()
-                                    ->where('office_id', $office_id)
-                                    ->where('status', 1)
-                                    ->get()
-                                    ->mapWithKeys(fn ($user) => [$user->cats => $user->FullName])
-                                    ->toArray();
-                            })
-                            ->disabled(fn (Get $get): bool => !$get('office_id'))
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function (Set $set, $state) {
-                                if ($state) {
-                                    $user = User::where('cats', $state)->first();
-                                    $set('name', $user?->FullName);
-                                }
-                            }),
-                    Hidden::make('name'),
+                    Grid::make(2)
+                        ->schema([
+                            TextInput::make('cats_no')
+                                ->label('Cats #')
+                                ->required(),
+                            TextInput::make('name')
+                                ->label('Requesting Personnel')
+                                ->required(),
+                        ]),
 
                     Textarea::make('remarks')
                         ->label('Problem/Issue')
@@ -132,8 +115,7 @@ class RequestForm
                         ->schema([
                             TextInput::make('control_no')
                                 ->label('Control No.')
-                                ->maxLength(255)
-                                ->required(fn (Get $get): bool => $get('checked')) // Conditionally required
+                                ->maxLength(255) // Conditionally required
                                 ->visible(fn (Get $get): bool => $get('checked')),
                             Textarea::make('details')
                                 ->label('Details')

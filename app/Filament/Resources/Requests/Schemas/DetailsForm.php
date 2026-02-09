@@ -3,6 +3,7 @@ namespace App\Filament\Resources\Requests\Schemas;
 
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;

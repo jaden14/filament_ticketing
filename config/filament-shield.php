@@ -173,7 +173,8 @@ return [
                 'delete',
             ],
             \App\Filament\Resources\Requests\RequestResource::class =>[
-                'assign_request'
+                'assign_request',
+                'return_unit',
             ],
         ],
         'exclude' => [

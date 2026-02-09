@@ -13,6 +13,7 @@ use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Table;
 use App\Models\Request;
@@ -33,10 +34,18 @@ class RequestsTable
                     ->label("Ticket No.")
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('office.officename')
+               TextColumn::make('office.officename')
                     ->label("Office")
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(fn (Request $record): string => $record->name ?? 'N/A'),
+               TextColumn::make('remarks')
+                    ->label("Problem/issue")
+                    ->searchable()
+                    ->sortable()
+                    ->wrap()
+                    ->lineClamp(2) // Limit to 2 lines
+                    ->tooltip(fn ($record) => $record->remarks),
                 TextColumn::make('created_at')
                     ->label("Date")
                     ->date()
@@ -166,7 +175,10 @@ class RequestsTable
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->wrap(),
             ])
-            ->defaultSort('created_at', 'desc')
+            ->modifyQueryUsing(function (Builder $query) {
+                $query->withoutTrashed()
+                      ->orderByStatusAndPriority(); // This now includes priority ordering
+            })
             ->filters([
             ])
             ->recordActions([
@@ -212,6 +224,56 @@ class RequestsTable
                             RequestResource::getUrl('my-assignment', ['record' => $record]) // Use $record->id
                         ),
                     
+                    // Return By Action - NEW
+                    Action::make('returnBy')
+                        ->label('Return By')
+                        ->icon('heroicon-o-arrow-uturn-left')
+                        ->color('success')
+                        ->modalHeading('Update Return By')
+                        ->modalWidth('md')
+                        ->visible(function (Request $record): bool {
+                            // Check if user has any of these roles
+
+                            if (!auth()->user()->hasAnyRole(['admin', 'super_admin'])) {
+                                return false;
+                            }
+                            
+                            // Only show if there are completed checkrequests
+                            return $record->checkrequest()
+                                ->where('status', 'Completed')
+                                ->exists();
+                        })
+                        ->fillForm(function (Request $record): array {
+                            $completedCheckRequest = $record->checkrequest()
+                                ->where('status', 'Completed')
+                                ->first();
+                            
+                            return [
+                                'return_by' => $completedCheckRequest?->return_by ?? '',
+                            ];
+                        })
+                        ->form([
+                            TextInput::make('return_by')
+                                ->label('Return By')
+                                ->required()
+                                ->maxLength(255)
+                                ->placeholder('Enter return by information'),
+                        ])
+                        ->action(function (array $data, Request $record): void {
+                            // Update all completed checkrequests WITHOUT updating timestamps
+                            $completedCheckrequests = Checkrequest::where('formrequest_id', $record->id)
+                                ->where('status', 'Completed')
+                                ->get();
+                            
+                            foreach ($completedCheckrequests as $checkrequest) {
+                                // Disable timestamps temporarily
+                                $checkrequest->timestamps = false;
+                                $checkrequest->update(['return_by' => $data['return_by']]);
+                                $checkrequest->timestamps = true;
+                            }
+                        })
+                        ->successNotificationTitle('Return By updated successfully'),
+
                     Action::make('assignReassign')
                         ->label('Assign')
                         ->icon('heroicon-o-user-plus')
@@ -230,9 +292,9 @@ class RequestsTable
                                 return false;
                             }
                             
-                            if (!auth()->user()->can('assignRequest', $record)) {
+                           /* if (!auth()->user()->can('assignRequest', $record)) {
                                 return false;
-                            }
+                            }*/
                             
                             // Check CheckRequest statuses
                             $checkRequests = CheckRequest::where('formrequest_id', $record->id)->get();
@@ -328,7 +390,7 @@ class RequestsTable
                         })
                         ->successNotificationTitle('Personnel assignment updated'),
                     EditAction::make()
-                        ->visible(function (Request $record): bool {
+                        /*->visible(function (Request $record): bool {
                             // Only allow editing if:
                             // 1. Main status is 'Pending'
                             // 2. No CheckRequest is 'On Process' or 'Completed'
@@ -342,7 +404,7 @@ class RequestsTable
                                 ->exists();
                                 
                             return !$hasActiveOrCompleted;
-                        }),
+                        }),*/
                 ])
                 ->icon('heroicon-m-ellipsis-vertical')
                 ->color('gray')
