@@ -82,7 +82,7 @@ class RequestResource extends Resource
         return [
             'index' => ListRequests::route('/'), 
             'my-assignment' => ViewAssignment::route('/{record}/my-assignment'),
-            'view-request' =>  ViewRequestPage::route('/{record}/view-request'),
+            'view-request' =>  ViewRequest::route('/{record}/view-request'),
             'eidt' => EditRequest::route('/{record}/edit'),
         ];
     }

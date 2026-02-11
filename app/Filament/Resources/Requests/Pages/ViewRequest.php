@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
 
-class ViewRequestPage extends Page
+class ViewRequest extends Page
 {
 
     protected static string $resource = RequestResource::class;
