@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Requests\Pages;
 
 use App\Filament\Resources\Requests\RequestResource;
-use App\Filament\Resources\Requests\Schemas\DetailsFormSchema;
+use App\Filament\Resources\Requests\Schemas\DetailsForm;
 use Filament\Resources\Pages\Page;
 use App\Models\Request;
 use App\Models\Checkrequest;
@@ -42,7 +42,7 @@ class ViewRequest extends Page
      public function form(Schema $schema): Schema
     {
         return $schema
-            ->schema(DetailsFormSchema::make($this->record))
+            ->schema(DetailsForm::make($this->record))
             ->statePath('data');
     }
 

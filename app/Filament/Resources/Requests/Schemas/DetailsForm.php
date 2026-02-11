@@ -18,7 +18,7 @@ use App\Models\Checkrequest;
 use Carbon\Carbon;
 use Filament\Forms\Components\Hidden;
 
-class DetailsFormSchema
+class DetailsForm
 {
 	public static function make(Request $request): array
     {

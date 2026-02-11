@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Requests\Pages;
 
 use App\Filament\Resources\Requests\RequestResource;
-use App\Filament\Resources\Requests\Schemas\CheckRequestFormSchema;
+use App\Filament\Resources\Requests\Schemas\CheckRequestForm;
 use App\Models\Checkrequest;
 use App\Models\Request;
 use Filament\Resources\Pages\Page;
@@ -75,7 +75,7 @@ class ViewAssignment extends Page
     public function form(Schema $schema): Schema
     {
         return $schema
-            ->schema(CheckRequestFormSchema::make($this->record))
+            ->schema(CheckRequestForm::make($this->record))
             ->statePath('data');
     }
 

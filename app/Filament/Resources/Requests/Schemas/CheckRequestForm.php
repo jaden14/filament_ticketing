@@ -21,7 +21,7 @@ use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Support\Exceptions\Halt;
 
-class CheckRequestFormSchema
+class CheckRequestForm
 {
     public static function make(Request $request): array
     {
