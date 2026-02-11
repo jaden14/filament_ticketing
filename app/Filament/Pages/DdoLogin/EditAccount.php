@@ -1,12 +1,12 @@
 <?php
 
-namespace Javarex\DdoLogin\Pages;
+namespace App\Filament\Pages\DdoLogin;
 
 use Filament\Schemas\Schema;
 use Filament\Auth\Pages\EditProfile;
 use Filament\Forms\Components\TextInput;
 
-class Edit extends EditProfile
+class EditAccount extends EditProfile
 {
     protected function getUserNameFormComponent(): TextInput
     {
