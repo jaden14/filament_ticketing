@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable implements HasName
@@ -83,5 +84,10 @@ class User extends Authenticatable implements HasName
     {
         return $query->select('*')
             ->selectRaw("CONCAT(firstname, ' ', lastname) as full_name");
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true;
     }
 }
