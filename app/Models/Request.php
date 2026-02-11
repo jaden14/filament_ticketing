@@ -209,16 +209,9 @@ class Request extends Model
                 THEN 4
                 
                 ELSE 5
-            END as status_priority,
-            CASE
-                WHEN prio = "p1" THEN 1
-                WHEN prio = "p2" THEN 2
-                WHEN prio = "p3" THEN 3
-                ELSE 4
-            END as prio_order
+            END as status_priority
         ')
         ->orderBy('status_priority', 'asc')
-        ->orderBy('prio_order', 'asc')
         ->orderBy('created_at', 'desc');
     }
 }
