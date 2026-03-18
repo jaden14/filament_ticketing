@@ -14,6 +14,7 @@ class Booking extends Model
 
     protected $casts = [
         'booked_at' => 'date',
+        'start_date' => 'date',
         'returned_at' => 'datetime',
         'released_at' => 'datetime',
         'status' => 'string',

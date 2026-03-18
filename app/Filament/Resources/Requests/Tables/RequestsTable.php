@@ -21,7 +21,7 @@ use App\Models\Checkrequest;
 use App\Models\User;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
-use App\Filament\Resources\Requests\Schemas\CheckRequestFormSchema;
+use App\Filament\Resources\Requests\Schemas\CheckRequestForm;
 use App\Filament\Resources\Requests\RequestResource;
 
 class RequestsTable
@@ -313,9 +313,9 @@ class RequestsTable
                             
                             return true;
                         })
-                        ->fillForm(fn (Request $record): array => [
+                       /* ->fillForm(fn (Request $record): array => [
                             'assigned_to' => $record->assigned_to,
-                        ])
+                        ])*/
                         ->fillForm(fn (Request $record): array => [
                             // Get all assigned user IDs from CheckRequest table
                             'assigned_to' => CheckRequest::where('formrequest_id', $record->id)
@@ -388,23 +388,81 @@ class RequestsTable
                             ->body($message)
                             ->send();
                         })
+                        ->extraModalFooterActions([
+                            Action::make('saveAndRedirect')
+                                ->label('Save & Go to My Assignment')
+                                ->color('success')
+
+                                ->action(function ($livewire, Request $record) {
+
+                                    // ✅ Get form data safely
+                                    $data = $livewire->getMountedTableActionForm()->getState();
+
+                                    if (!isset($data['assigned_to']) || empty($data['assigned_to'])) {
+                                        Notification::make()
+                                            ->danger()
+                                            ->title('Error')
+                                            ->body('Please select at least one user.')
+                                            ->send();
+
+                                        return;
+                                    }
+
+                                    if (!in_array(auth()->id(), $data['assigned_to'])) {
+                                        Notification::make()
+                                            ->danger()
+                                            ->title('Not allowed')
+                                            ->body('You are not included in the assigned users.')
+                                            ->send();
+
+                                        return;
+                                    }
+
+                                    // ✅ SAME LOGIC (unchanged)
+                                    $selectedUserIds = $data['assigned_to'];
+
+                                    $currentUserIds = CheckRequest::where('formrequest_id', $record->id)
+                                        ->pluck('user_id')
+                                        ->toArray();
+
+                                    $usersToAdd = array_diff($selectedUserIds, $currentUserIds);
+                                    $usersToRemove = array_diff($currentUserIds, $selectedUserIds);
+
+                                    if (!empty($usersToRemove)) {
+                                        CheckRequest::where('formrequest_id', $record->id)
+                                            ->whereIn('user_id', $usersToRemove)
+                                            ->delete();
+                                    }
+
+                                    foreach ($usersToAdd as $userId) {
+                                        CheckRequest::create([
+                                            'formrequest_id' => $record->id,
+                                            'status' => 'Pending',
+                                            'user_id' => $userId,
+                                            'start_pause' => 0,
+                                            'time' => 0,
+                                            'seconds_time' => 0,
+                                        ]);
+                                    }
+
+                                    // ✅ FORCE redirect (important)
+                                    return redirect()->to(
+                                        RequestResource::getUrl('my-assignment', [
+                                            'record' => $record->id,
+                                        ])
+                                    );
+                                }),
+                        ])
                         ->successNotificationTitle('Personnel assignment updated'),
                     EditAction::make()
-                        /*->visible(function (Request $record): bool {
-                            // Only allow editing if:
-                            // 1. Main status is 'Pending'
-                            // 2. No CheckRequest is 'On Process' or 'Completed'
-                            
-                            if ($record->status !== 'Pending') {
-                                return false;
-                            }
-                            
-                            $hasActiveOrCompleted = CheckRequest::where('formrequest_id', $record->id)
-                                ->whereIn('status', ['On Process', 'Completed'])
-                                ->exists();
-                                
-                            return !$hasActiveOrCompleted;
-                        }),*/
+                         ->after(function ($record) {
+                            return redirect()->to(
+                                RequestResource::getUrl('index', [
+                                    'tableAction' => 'assignReassign',
+                                    'tableActionRecord' => $record->id,
+                                ])
+                            );
+                        })
                 ])
                 ->icon('heroicon-m-ellipsis-vertical')
                 ->color('gray')

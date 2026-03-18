@@ -22,4 +22,14 @@ class EditRequest extends EditRecord
             RestoreAction::make(),
         ];
     }
+
+    protected function getRedirectUrl(): string
+    {
+
+        dd("test");
+        return $this->getResource()::getUrl('index', [
+            'tableAction' => 'assignReassign',
+            'tableActionRecord' => $this->record->id,
+        ]);
+    }
 }

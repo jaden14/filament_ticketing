@@ -44,9 +44,9 @@ class BookingCalendar extends CalendarWidget
     protected function getEvents(FetchInfo $info): Collection | array | Builder 
     {
          return Booking::query()
-            ->whereNotNull('booked_at')
-            ->where('booked_at', '>=', $info->start)
-            ->where('booked_at', '<=', $info->end)
+            ->whereNotNull('start_date')
+            ->where('start_date', '>=', $info->start)
+            ->where('start_date', '<=', $info->end)
             ->with(['service', 'office'])
             ->get()
             ->map(function (Booking $booking) {
@@ -65,8 +65,8 @@ class BookingCalendar extends CalendarWidget
                 
                 return CalendarEvent::make($booking)
                     ->title($title)
-                    ->start($booking->booked_at)
-                    ->end($booking->returned_at ?? $booking->booked_at)
+                    ->start($booking->start_date)
+                    ->end($booking->returned_at ?? $booking->start_date)
                     ->backgroundColor($color)
                     ->textColor('#ffffff')
                     ->allDay();

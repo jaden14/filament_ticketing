@@ -55,12 +55,22 @@ class BookingForm
 
                 DatePicker::make('booked_at')
                     ->label("Book On")
+                    ->columnSpanFull()
                     ->required()
                     ->reactive()
-                    ->maxDate(fn (Get $get) => $get('returned_at'))
+                    ->maxDate(fn (Get $get) => $get('start_date'))
                     ->disabled(fn (Get $get): bool => $get('released') === true),
+
+                DatePicker::make('start_date')
+                    ->label("Start On")
+                    ->required()
+                    ->reactive()
+                    ->minDate(fn (Get $get) => $get('booked_at'))
+                    ->disabled(fn (Get $get): bool => $get('released') === true),
+
                 DatePicker::make('returned_at')
                     ->label("Return On")
+                    ->required()
                     ->reactive()
                     ->minDate(fn (Get $get) => $get('booked_at'))
                     ->disabled(fn (Get $get): bool => $get('released') === true),
