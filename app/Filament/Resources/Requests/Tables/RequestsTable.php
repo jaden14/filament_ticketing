@@ -178,8 +178,8 @@ class RequestsTable
             ->modifyQueryUsing(function (Builder $query) {
 
                 $query->withoutTrashed()
-                      ->orderByStatusPriority()
-                      ->orderBy('created_at', 'desc');
+                      ->orderByStatusAndPriority()
+                       ;
 
                 // ✅ Show ALL assigned tickets (any status)
                 if (request()->get('my') == 1) {
@@ -500,11 +500,11 @@ class RequestsTable
                 ->color('gray')
                 ->size('sm'),
             ])
-            ->modifyQueryUsing(function (Builder $query) {
+           /* ->modifyQueryUsing(function (Builder $query) {
                 $query->withoutTrashed()
                       ->orderByStatusPriority()
                       ->orderBy('created_at', 'desc');
-            })
+            })*/
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

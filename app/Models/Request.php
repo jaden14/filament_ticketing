@@ -164,21 +164,18 @@ class Request extends Model
         return $query->selectRaw('
             formrequests.*,
             CASE
-                -- Update Required: ONLY if no checkrequests exist AND missing required fields
                 WHEN NOT EXISTS (
                     SELECT 1 FROM checkrequests 
                     WHERE checkrequests.formrequest_id = formrequests.id
                 ) AND (service_id IS NULL OR prio IS NULL OR category_id IS NULL OR no_of_affected IS NULL) 
                 THEN 1
                 
-                -- Pending: No checkrequests exist yet (and has all required fields)
                 WHEN NOT EXISTS (
                     SELECT 1 FROM checkrequests 
                     WHERE checkrequests.formrequest_id = formrequests.id
                 ) 
                 THEN 2
                 
-                -- Pending: Checkrequests exist but all are Pending
                 WHEN EXISTS (
                     SELECT 1 FROM checkrequests 
                     WHERE checkrequests.formrequest_id = formrequests.id
@@ -189,7 +186,6 @@ class Request extends Model
                 ) 
                 THEN 2
                 
-                -- On Process: At least one checkrequest is On Process
                 WHEN EXISTS (
                     SELECT 1 FROM checkrequests 
                     WHERE checkrequests.formrequest_id = formrequests.id 
@@ -197,7 +193,6 @@ class Request extends Model
                 ) 
                 THEN 3
                 
-                -- Closed: All checkrequests are Completed
                 WHEN EXISTS (
                     SELECT 1 FROM checkrequests 
                     WHERE checkrequests.formrequest_id = formrequests.id
@@ -212,6 +207,6 @@ class Request extends Model
             END as status_priority
         ')
         ->orderBy('status_priority', 'asc')
-        ->orderBy('created_at', 'desc');
+        ->orderBy('created_at', 'desc'); // ✅ this is correct
     }
 }
