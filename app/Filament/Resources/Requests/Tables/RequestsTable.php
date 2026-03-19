@@ -194,7 +194,10 @@ class RequestsTable
                     ->icon('heroicon-o-user')
                     ->color(fn () => request()->get('my') ? 'primary' : 'gray') // highlight active
                     ->badge(function () {
-                        return Checkrequest::where('user_id', auth()->id())->where('status', '!=', 'Completed')->count();
+                        return Checkrequest::where('user_id', auth()->id())->where('status', '!=', 'Completed')
+                        ->whereHas('request', function ($q) {
+                            $q->whereNull('deleted_at'); // ✅ exclude soft deleted requests
+                        })->count();
                     })
                     ->url(fn () => RequestResource::getUrl('index', [
                         'my' => request()->get('my') ? null : 1, // toggle ON/OFF
