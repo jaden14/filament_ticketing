@@ -148,10 +148,10 @@ class RequestsTable
                                 )
                             )
                     )
-                    ->sortable(query: function ($query, $direction) {
+                   /* ->sortable(query: function ($query, $direction) {
                         // Sort by the shortest service time among assigned users
                         return $query->orderBy('total_service_time', $direction);
-                    })
+                    })*/
                     ->placeholder('N/A')
                     ->tooltip(function (Request $record): string {
                         $serviceTimes = $record->individual_service_times;
@@ -176,10 +176,39 @@ class RequestsTable
                     ->wrap(),
             ])
             ->modifyQueryUsing(function (Builder $query) {
+
                 $query->withoutTrashed()
-                      ->orderByStatusAndPriority(); // This now includes priority ordering
+                      ->orderByStatusPriority()
+                      ->orderBy('created_at', 'desc');
+
+                // ✅ Show ALL assigned tickets (any status)
+                if (request()->get('my') == 1) {
+                    $query->whereHas('checkrequest', function ($q) {
+                        $q->where('user_id', auth()->id());
+                    });
+                }
             })
+            ->headerActions([
+                 Action::make('myAssignments')
+                    ->label('My Assignments')
+                    ->icon('heroicon-o-user')
+                    ->color(fn () => request()->get('my') ? 'primary' : 'gray') // highlight active
+                    ->badge(function () {
+                        return Checkrequest::where('user_id', auth()->id())->where('status', '!=', 'Completed')->count();
+                    })
+                    ->url(fn () => RequestResource::getUrl('index', [
+                        'my' => request()->get('my') ? null : 1, // toggle ON/OFF
+                    ])),
+            ])
             ->filters([
+                Filter::make('my_assignments')
+                    ->label('My Assignments')
+                    ->query(function (Builder $query) {
+                        $query->whereHas('checkrequest', function ($q) {
+                            $q->where('user_id', auth()->id())
+                              ->where('status', '!=', 'Completed');
+                        });
+                    }),
             ])
             ->recordActions([
                 ActionGroup::make([

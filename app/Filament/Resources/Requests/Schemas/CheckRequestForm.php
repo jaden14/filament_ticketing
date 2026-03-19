@@ -266,7 +266,6 @@ class CheckRequestForm
                                 Select::make('ipcr_code_id')
                                     ->label('IPCR Output')
                                     ->placeholder('Select IPCR Output')
-                                    ->required()
                                     ->searchable()
                                     ->preload()
                                     ->options(function () use ($request) {
