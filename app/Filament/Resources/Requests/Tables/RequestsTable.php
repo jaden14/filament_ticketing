@@ -23,6 +23,10 @@ use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\Requests\Schemas\CheckRequestForm;
 use App\Filament\Resources\Requests\RequestResource;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Forms\Components\DatePicker;
+use App\Models\Service;      // adjust to your actual model
+use App\Models\Office; 
 
 class RequestsTable
 {
@@ -211,6 +215,98 @@ class RequestsTable
                             $q->where('user_id', auth()->id())
                               ->where('status', '!=', 'Completed');
                         });
+                    }),
+
+                 SelectFilter::make('category_id')
+                    ->label('Category')
+                    ->searchable()
+                    ->options(
+                        // Build options from your Service model's classification_code
+                        Service::query()
+                            ->whereNotNull('classification_code')
+                            ->pluck('classification', 'classification_code')
+                            ->toArray()
+                    )
+                    ->query(function (Builder $query, array $data) {
+                        if (filled($data['value'])) {
+                            $query->whereHas('service', function ($q) use ($data) {
+                                $q->where('classification_code', 'like', '%' . $data['value'] . '%');
+                            });
+                        }
+                    }),
+
+                SelectFilter::make('office_id')
+                    ->label('Office')
+                    ->searchable()
+                    ->relationship('office', 'officename'),   // uses Filament's built-in relationship filter
+
+                Filter::make('created_at')
+                    ->label('Date range')
+                    ->form([
+                        DatePicker::make('date_from')
+                            ->label('From')
+                            ->native(false),
+                        DatePicker::make('date_to')
+                            ->label('To')
+                            ->native(false),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        $query
+                            ->when(
+                                filled($data['date_from']),
+                                fn ($q) => $q->where('created_at', '>=', $data['date_from'])
+                            )
+                            ->when(
+                                filled($data['date_to']),
+                                fn ($q) => $q->where('created_at', '<=', $data['date_to'])
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if (filled($data['date_from'])) {
+                            $indicators[] = 'From: ' . $data['date_from'];
+                        }
+                        if (filled($data['date_to'])) {
+                            $indicators[] = 'To: ' . $data['date_to'];
+                        }
+                        return $indicators;
+                    }),
+
+                SelectFilter::make('assign')
+                    ->label('Assigned to')
+                    ->searchable()
+                    ->options(
+                        User::query()
+                            ->where('status', 1)
+                            ->whereNull('deleted_at')
+                            ->get()
+                            ->mapWithKeys(fn ($user) => [$user->id => $user->FullName])
+                            ->toArray()
+                    )
+                    ->query(function (Builder $query, array $data) {
+                        if (filled($data['value'])) {
+                            $query->whereHas('checkrequest', function ($q) use ($data) {
+                                $q->where('user_id', $data['value']);
+                            });
+                        }
+                    }),
+
+                Filter::make('control_no')
+                    ->label('Control no.')
+                    ->form([
+                        TextInput::make('control_no')
+                            ->label('Control no.')
+                            ->placeholder('Search...'),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        if (filled($data['control_no'])) {
+                            $query->where('control_no', 'like', '%' . $data['control_no'] . '%');
+                        }
+                    })
+                    ->indicateUsing(function (array $data): ?string {
+                        return filled($data['control_no'])
+                            ? 'Control no.: ' . $data['control_no']
+                            : null;
                     }),
             ])
             ->recordActions([
